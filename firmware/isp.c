@@ -7,6 +7,10 @@
  * Licence........: GNU GPL v2 (see Readme.txt)
  * Creation Date..: 2005-02-23
  * Last change....: 2010-01-19
+ *
+ * Modifier.......: Daniel Penkov <Penkov-D at GitHub>
+ * Description....: Added support for the 8052 family chip
+ * Last change....: 2024-10-25
  */
 
 #include <avr/io.h>
@@ -105,32 +109,30 @@ void ispDelay() {
 	}
 }
 
-void ispConnect() {
-
-	uint16_t time_count;
+void ispConnect(uchar holdrst) {
 
 	/* all ISP pins are inputs before */
 	/* now set output pins */
 	ISP_DDR |= (1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI);
 
-	/* Set device in reset mode */
-	ISP_OUT |= (1 << ISP_RST); /* RST high */
-
-	for (time_count = 0; time_count < 100; ++time_count)
+	if (holdrst) {
+		/* Set device in reset mode */
+		ISP_OUT |= (1 << ISP_RST); /* RST high */
 		ispDelay();
+		ISP_OUT &= ~(1 << ISP_SCK); /* SCK low */
+		ispDelay();
+	}
+	else {
+		/* reset device */
+		ISP_OUT &= ~(1 << ISP_RST); /* RST low */
+		ISP_OUT &= ~(1 << ISP_SCK); /* SCK low */
 
-
-	/* reset device */
-	// ISP_OUT &= ~(1 << ISP_RST); /* RST low */
-	ISP_OUT &= ~(1 << ISP_SCK); /* SCK low */
-
-	/* positive reset pulse > 2 SCK (target) */
-	ISP_OUT |= (1 << ISP_RST); /* RST high */
-
-	// Leave the RST high
-	// ISP_OUT &= ~(1 << ISP_RST); /* RST low */
-
-	ispDelay();
+		/* positive reset pulse > 2 SCK (target) */
+		ispDelay();
+		ISP_OUT |= (1 << ISP_RST); /* RST high */
+		ispDelay();
+		ISP_OUT &= ~(1 << ISP_RST); /* RST low */
+	}
 
 	if (ispTransmit == ispTransmit_hw) {
 		spiHWenable();
@@ -190,7 +192,7 @@ uchar ispTransmit_hw(uchar send_byte) {
 	return SPDR;
 }
 
-uchar ispEnterProgrammingMode() {
+uchar ispEnterProgrammingMode(uchar holdrst) {
 	uchar check;
 	uchar count = 32;
 
@@ -206,12 +208,21 @@ uchar ispEnterProgrammingMode() {
 
 		spiHWdisable();
 
-		/* pulse RST */
-		ispDelay();
-		// ISP_OUT |= (1 << ISP_RST); /* RST high */
-		ispDelay();
-		// ISP_OUT &= ~(1 << ISP_RST); /* RST low */
-		ispDelay();
+		if (holdrst) {
+			/* equivelant delay */
+			ispDelay();
+			ispDelay();
+			ispDelay();
+		}
+		else {
+			/* pulse RST */
+			ispDelay();
+			ISP_OUT |= (1 << ISP_RST); /* RST high */
+			ispDelay();
+			ISP_OUT &= ~(1 << ISP_RST); /* RST low */
+			ispDelay();
+		}
+
 
 		if (ispTransmit == ispTransmit_hw) {
 			spiHWenable();

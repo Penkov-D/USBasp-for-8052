@@ -8,9 +8,13 @@
  * Creation Date..: 2005-02-20
  * Last change....: 2009-02-28
  *
- * PC2 SCK speed option.
- * GND  -> slow (8khz SCK),
- * open -> software set speed (default is 375kHz SCK)
+ * Modifier.......: Daniel Penkov <Penkov-D at GitHub>
+ * Description....: Added support for the 8052 family chip
+ * Last change....: 2024-10-25
+ *
+ * PC2 reset behavior.
+ * GND  -> RST high from ispConnect() till ispDisconnect(),
+ * open -> default original RST begavior.
  */
 
 #include <avr/io.h>
@@ -40,21 +44,18 @@ static uchar prog_pagecounter;
 uchar usbFunctionSetup(uchar data[8]) {
 
 	uchar len = 0;
+	uchar cont_reset = ((PINC & (1 << PC2)) != 0);
 
 	if (data[1] == USBASP_FUNC_CONNECT) {
 
 		/* set SCK speed */
-		if ((PINC & (1 << PC2)) == 0) {
-			ispSetSCKOption(USBASP_ISP_SCK_8);
-		} else {
-			ispSetSCKOption(prog_sck);
-		}
+		ispSetSCKOption(prog_sck);
 
 		/* set compatibility mode of address delivering */
 		prog_address_newmode = 0;
 
 		ledRedOn();
-		ispConnect();
+		ispConnect(cont_reset);
 
 	} else if (data[1] == USBASP_FUNC_DISCONNECT) {
 		ispDisconnect();
@@ -86,7 +87,7 @@ uchar usbFunctionSetup(uchar data[8]) {
 		len = 0xff; /* multiple in */
 
 	} else if (data[1] == USBASP_FUNC_ENABLEPROG) {
-		replyBuffer[0] = ispEnterProgrammingMode();
+		replyBuffer[0] = ispEnterProgrammingMode(cont_reset);
 		len = 1;
 
 	} else if (data[1] == USBASP_FUNC_WRITEFLASH) {

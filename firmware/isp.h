@@ -7,6 +7,10 @@
  * Licence........: GNU GPL v2 (see Readme.txt)
  * Creation Date..: 2005-02-23
  * Last change....: 2009-02-28
+ *
+ * Modifier.......: Daniel Penkov <Penkov-D at GitHub>
+ * Description....: Added support for the 8052 family chip
+ * Last change....: 2024-10-25
  */
 
 #ifndef __isp_h_included__
@@ -25,7 +29,7 @@
 #define ISP_SCK   PB5
 
 /* Prepare connection to target device */
-void ispConnect();
+void ispConnect(uchar holdrst);
 
 /* Close connection to target device */
 void ispDisconnect();
@@ -37,7 +41,7 @@ uchar ispTransmit_sw(uchar send_byte);
 uchar ispTransmit_hw(uchar send_byte);
 
 /* enter programming mode */
-uchar ispEnterProgrammingMode();
+uchar ispEnterProgrammingMode(uchar holdrst);
 
 /* read byte from eeprom at given address */
 uchar ispReadEEPROM(unsigned int address);
