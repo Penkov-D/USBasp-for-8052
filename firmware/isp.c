@@ -107,19 +107,30 @@ void ispDelay() {
 
 void ispConnect() {
 
+	uint16_t time_count;
+
 	/* all ISP pins are inputs before */
 	/* now set output pins */
 	ISP_DDR |= (1 << ISP_RST) | (1 << ISP_SCK) | (1 << ISP_MOSI);
 
+	/* Set device in reset mode */
+	ISP_OUT |= (1 << ISP_RST); /* RST high */
+
+	for (time_count = 0; time_count < 100; ++time_count)
+		ispDelay();
+
+
 	/* reset device */
-	ISP_OUT &= ~(1 << ISP_RST); /* RST low */
+	// ISP_OUT &= ~(1 << ISP_RST); /* RST low */
 	ISP_OUT &= ~(1 << ISP_SCK); /* SCK low */
 
 	/* positive reset pulse > 2 SCK (target) */
-	ispDelay();
 	ISP_OUT |= (1 << ISP_RST); /* RST high */
+
+	// Leave the RST high
+	// ISP_OUT &= ~(1 << ISP_RST); /* RST low */
+
 	ispDelay();
-	ISP_OUT &= ~(1 << ISP_RST); /* RST low */
 
 	if (ispTransmit == ispTransmit_hw) {
 		spiHWenable();
@@ -197,9 +208,9 @@ uchar ispEnterProgrammingMode() {
 
 		/* pulse RST */
 		ispDelay();
-		ISP_OUT |= (1 << ISP_RST); /* RST high */
+		// ISP_OUT |= (1 << ISP_RST); /* RST high */
 		ispDelay();
-		ISP_OUT &= ~(1 << ISP_RST); /* RST low */
+		// ISP_OUT &= ~(1 << ISP_RST); /* RST low */
 		ispDelay();
 
 		if (ispTransmit == ispTransmit_hw) {
