@@ -1,3 +1,11 @@
+USBasp for 8052
+This project is a fork of the original legendary USBasp program, that support
+the 8052 family chips (mainly at89s51 and at89s52). As of now, the program is
+supporting both chips, and tested over avrdude. Jumper number 3 is set to
+enable and disable the modifications (close it to use the programmer with the
+original software).
+
+
 This is the README file for USBasp.
 
 USBasp is a USB in-circuit programmer for Atmel AVR controllers. It simply
